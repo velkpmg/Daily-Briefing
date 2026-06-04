@@ -3,30 +3,35 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// ── PUT YOUR ANTHROPIC API KEY HERE ──────────────────────────────────────────
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-// ─────────────────────────────────────────────────────────────────────────────
-
 const PORT = process.env.PORT || 3000;
 
 const MIME = {
   '.html': 'text/html',
-  '.css':  'text/css',
-  '.js':   'application/javascript',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
   '.json': 'application/json',
 };
 
 const server = http.createServer((req, res) => {
 
-  // ── API PROXY ──────────────────────────────────────────────────────────────
-  if (req.method === 'POST' && req.url === '/api/news') {
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
+    return res.end();
+  }
+
+  if (req.method === 'POST' && (req.url === '/api/news' || req.url === '/api/news/')) {
     let body = '';
     req.on('data', chunk => body += chunk);
     req.on('end', () => {
       let parsed;
       try { parsed = JSON.parse(body); } catch(e) {
-        res.writeHead(400, {'Content-Type':'application/json'});
-        return res.end(JSON.stringify({error:'Bad request body'}));
+        res.writeHead(400, {'Content-Type': 'application/json'});
+        return res.end(JSON.stringify({error: 'Bad request'}));
       }
 
       const payload = JSON.stringify({
@@ -61,7 +66,7 @@ const server = http.createServer((req, res) => {
       });
 
       apiReq.on('error', err => {
-        res.writeHead(500, {'Content-Type':'application/json'});
+        res.writeHead(500, {'Content-Type': 'application/json'});
         res.end(JSON.stringify({error: err.message}));
       });
 
@@ -71,7 +76,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── STATIC FILES ───────────────────────────────────────────────────────────
   let filePath = req.url === '/' ? '/index.html' : req.url;
   filePath = path.join(__dirname, 'public', filePath);
 
