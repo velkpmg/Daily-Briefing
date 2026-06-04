@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Daily Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #141720;
+  --surface2: #1c2030;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #eef0f5;
+  --muted: #7a8099;
+  --accent: #4f8ef7;
+  --up: #34d399;
+  --down: #f87171;
+  --re-tag: #1e3a5f; --re-text: #7bb8f8;
+  --cigar-tag: #3d2a0f; --cigar-text: #f5a94e;
+  --gen-tag: #0f2e1a; --gen-text: #4eca7a;
+  --fin-tag: #2a1e4a; --fin-text: #b07ef8;
+  --ca-tag: #1e3320; --ca-text: #6dd98c;
+  --radius: 14px; --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+.ticker-wrap { background: #080a0e; border-bottom: 1px solid var(--border); overflow: hidden; padding: 7px 0; position: relative; }
+.ticker-wrap::before, .ticker-wrap::after { content:''; position:absolute; top:0; bottom:0; width:48px; z-index:2; }
+.ticker-wrap::before { left:0; background:linear-gradient(to right,#080a0e,transparent); }
+.ticker-wrap::after { right:0; background:linear-gradient(to left,#080a0e,transparent); }
+.ticker-track { display:flex; white-space:nowrap; animation:scroll-left 55s linear infinite; }
+.ticker-track:hover { animation-play-state:paused; }
+.tick { display:inline-flex; align-items:center; gap:7px; padding:0 22px; font-family:'DM Mono',monospace; font-size:12px; }
+.tick-sym { color:var(--accent); font-weight:500; }
+.tick-price { color:var(--text); }
+.tick-up { color:var(--up); } .tick-down { color:var(--down); }
+@keyframes scroll-left { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.app-header { padding:16px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+.app-logo { font-family:'Playfair Display',serif; font-size:22px; letter-spacing:-0.02em; }
+.app-logo span { color:var(--accent); }
+.app-date { font-size:12px; color:var(--muted); }
+.tab-bar { display:flex; gap:4px; padding:14px 20px 0; overflow-x:auto; scrollbar-width:none; }
+.tab-bar::-webkit-scrollbar { display:none; }
+.tab-btn { display:flex; align-items:center; gap:7px; padding:8px 16px; border-radius:100px; font-size:13px; font-weight:500; border:1px solid var(--border); background:transparent; color:var(--muted); cursor:pointer; white-space:nowrap; transition:all 0.2s; font-family:'DM Sans',sans-serif; }
+.tab-btn svg { width:15px; height:15px; flex-shrink:0; }
+.tab-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tab-btn:hover:not(.active) { border-color:var(--border2); color:var(--text); }
+.content-area { padding:16px 20px 40px; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+.refresh-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.section-title { font-size:13px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; }
+.refresh-btn { display:flex; align-items:center; gap:5px; font-size:12px; font-weight:500; color:var(--accent); background:none; border:1px solid rgba(79,142,247,0.25); border-radius:100px; padding:5px 12px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.15s; }
+.refresh-btn:hover { background:rgba(79,142,247,0.1); }
+.refresh-btn svg { width:13px; height:13px; }
+.news-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; transition:border-color 0.2s, transform 0.15s; }
+.news-card:hover { border-color:var(--border2); transform:translateY(-1px); }
+.card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.tag { display:inline-block; font-size:10px; font-weight:600; padding:3px 9px; border-radius:100px; text-transform:uppercase; letter-spacing:0.06em; flex-shrink:0; }
+.tag-re { background:var(--re-tag); color:var(--re-text); }
+.tag-cigar { background:var(--cigar-tag); color:var(--cigar-text); }
+.tag-general { background:var(--gen-tag); color:var(--gen-text); }
+.tag-finance { background:var(--fin-tag); color:var(--fin-text); }
+.tag-ca { background:var(--ca-tag); color:var(--ca-text); }
+.card-time { font-size:11px; color:var(--muted); white-space:nowrap; margin-top:2px; }
+.card-headline { font-family:'Playfair Display',serif; font-size:15px; font-weight:600; line-height:1.45; color:var(--text); margin-bottom:7px; }
+.card-summary { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:10px; }
+.card-source { font-size:11px; color:var(--muted); font-weight:500; }
+.state-box { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:56px 20px; gap:14px; color:var(--muted); font-size:14px; text-align:center; }
+.spinner { width:30px; height:30px; border:2px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.75s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.error-card { background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.2); border-radius:var(--radius); padding:18px 20px; font-size:14px; color:#fca5a5; line-height:1.6; }
+.error-card strong { color:var(--down); display:block; margin-bottom:6px; }
+.updated-ts { font-size:11px; color:var(--muted); text-align:right; margin-top:14px; }
+@media (max-width:480px) {
+  .tab-bar { padding:10px 12px 0; }
+  .content-area { padding:14px 12px 80px; }
+  .app-header { padding:14px 14px 0; }
+}
+</style>
+</head>
+<body>
+<div class="ticker-wrap">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+<div class="app-header">
+  <div class="app-logo">Daily <span>Brief</span></div>
+  <div class="app-date" id="appDate"></div>
+</div>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('realestate',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+    Real Estate
+  </button>
+  <button class="tab-btn" onclick="switchTab('california',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    California
+  </button>
+  <button class="tab-btn" onclick="switchTab('cigar',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h2a2 2 0 010 4h-2"/><path d="M3 8h14v5a4 4 0 01-4 4H7a4 4 0 01-4-4V8z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+    Cigar & Tobacco
+  </button>
+  <button class="tab-btn" onclick="switchTab('general',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+    General News
+  </button>
+  <button class="tab-btn" onclick="switchTab('finance',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,7 13.5,15.5 8.5,10.5 2,17"/><polyline points="16,7 22,7 22,13"/></svg>
+    Markets
+  </button>
+</div>
+<div class="content-area">
+  <div id="panel-realestate" class="tab-panel active">
+    <div class="refresh-bar"><span class="section-title">Property & Real Estate</span><button class="refresh-btn" onclick="loadTab('realestate',true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh</button></div>
+    <div id="content-realestate"><div class="state-box"><div class="spinner"></div><span>Loading headlines…</span></div></div>
+  </div>
+  <div id="panel-california" class="tab-panel">
+    <div class="refresh-bar"><span class="section-title">California Property Management</span><button class="refresh-btn" onclick="loadTab('california',true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh</button></div>
+    <div id="content-california"><div class="state-box"><div class="spinner"></div><span>Loading headlines…</span></div></div>
+  </div>
+  <div id="panel-cigar" class="tab-panel">
+    <div class="refresh-bar"><span class="section-title">Cigar & Tobacco Industry</span><button class="refresh-btn" onclick="loadTab('cigar',true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh</button></div>
+    <div id="content-cigar"><div class="state-box"><div class="spinner"></div><span>Loading headlines…</span></div></div>
+  </div>
+  <div id="panel-general" class="tab-panel">
+    <div class="refresh-bar"><span class="section-title">General News Headlines</span><button class="refresh-btn" onclick="loadTab('general',true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh</button></div>
+    <div id="content-general"><div class="state-box"><div class="spinner"></div><span>Loading headlines…</span></div></div>
+  </div>
+  <div id="panel-finance" class="tab-panel">
+    <div class="refresh-bar"><span class="section-title">US Financial Markets</span><button class="refresh-btn" onclick="loadTab('finance',true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23,4 23,10 17,10"/><polyline points="1,20 1,14 7,14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>Refresh</button></div>
+    <div id="content-finance"><div class="state-box"><div class="spinner"></div><span>Loading headlines…</span></div></div>
+  </div>
+</div>
+<script>
+const TICKER = [
+  {sym:'SPY',price:'596.42',chg:'+1.23%',up:true},{sym:'AAPL',price:'211.16',chg:'+0.87%',up:true},
+  {sym:'MSFT',price:'449.30',chg:'+0.54%',up:true},{sym:'NVDA',price:'1,087.22',chg:'+2.14%',up:true},
+  {sym:'AMZN',price:'198.44',chg:'-0.33%',up:false},{sym:'TSLA',price:'182.90',chg:'-1.05%',up:false},
+  {sym:'GOOGL',price:'175.58',chg:'+0.62%',up:true},{sym:'META',price:'532.77',chg:'+0.91%',up:true},
+  {sym:'JPM',price:'262.33',chg:'+0.44%',up:true},{sym:'DOW',price:'42,180',chg:'+0.38%',up:true},
+  {sym:'NASDAQ',price:'18,890',chg:'+0.71%',up:true},{sym:'S&P500',price:'5,964',chg:'+0.52%',up:true},
+  {sym:'VIX',price:'14.22',chg:'-3.10%',up:false},{sym:'GOLD',price:'2,336',chg:'-0.18%',up:false},
+  {sym:'BTC',price:'67,420',chg:'+1.82%',up:true}
+];
+const TABS = {
+  realestate: {
+    tag:'Real Estate', cls:'tag-re',
+    prompt:`Search the web for today's top 10 most important real estate and property management news headlines (today's date). Include housing market stats, mortgage rates, commercial real estate, REITs, and property management industry news. Return ONLY a valid JSON array, no markdown, no code fences. Format: [{"headline":"...","source":"...","time":"...","summary":"One sentence."}]`
+  },
+  california: {
+    tag:'CA Property', cls:'tag-ca',
+    prompt:`Search the web for today's top 10 California property management and real estate news headlines (today's date). Focus on CA rent control, AB/SB legislation, Los Angeles and San Francisco housing, California Apartment Association, eviction policy, local ordinances, Southern and Northern California real estate trends. Return ONLY a valid JSON array, no markdown, no code fences. Format: [{"headline":"...","source":"...","time":"...","summary":"One sentence."}]`
+  },
+  cigar: {
+    tag:'Cigar & Tobacco', cls:'tag-cigar',
+    prompt:`Search the web for today's top 10 cigar and tobacco industry news headlines (today's date). Include FDA regulation, new releases, tobacco companies, premium cigar market, legislation, trade news. Return ONLY a valid JSON array, no markdown, no code fences. Format: [{"headline":"...","source":"...","time":"...","summary":"One sentence."}]`
+  },
+  general: {
+    tag:'General News', cls:'tag-general',
+    prompt:`Search the web for today's top 10 general news headlines (today's date). Mix of US and world news, politics, science, technology, culture. Return ONLY a valid JSON array, no markdown, no code fences. Format: [{"headline":"...","source":"...","time":"...","summary":"One sentence."}]`
+  },
+  finance: {
+    tag:'Markets', cls:'tag-finance',
+    prompt:`Search the web for today's top 10 US financial markets and stock market news headlines (today's date). Include index moves, Fed news, earnings, economic data, sector news. Return ONLY a valid JSON array, no markdown, no code fences. Format: [{"headline":"...","source":"...","time":"...","summary":"One sentence."}]`
+  }
+};
+const loaded = {};
+const track = document.getElementById('tickerTrack');
+let tickHtml = '';
+for (let i = 0; i < 2; i++) {
+  TICKER.forEach(t => {
+    tickHtml += `<span class="tick"><span class="tick-sym">${t.sym}</span><span class="tick-price">${t.price}</span><span class="${t.up?'tick-up':'tick-down'}">${t.up?'▲':'▼'} ${t.chg}</span></span>`;
+  });
+}
+track.innerHTML = tickHtml;
+document.getElementById('appDate').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + id).classList.add('active');
+  if (!loaded[id]) loadTab(id);
+}
+async function loadTab(id, force) {
+  if (loaded[id] && !force) return;
+  const el = document.getElementById('content-' + id);
+  const cfg = TABS[id];
+  el.innerHTML = '<div class="state-box"><div class="spinner"></div><span>Fetching latest headlines…</span></div>';
+  try {
+    const res = await fetch('/api/news', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: cfg.prompt })
+    });
+    if (!res.ok) {
+      let hint = '';
+      if (res.status === 401) hint = ' Check your API key in server.js.';
+      else if (res.status === 402) hint = ' Add billing credits at console.anthropic.com/settings/billing.';
+      else if (res.status === 429) hint = ' Rate limited — wait a moment and refresh.';
+      throw new Error('API error ' + res.status + '.' + hint);
+    }
+    const data = await res.json();
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('Unexpected response format.');
+    const articles = JSON.parse(match[0]);
+    if (!Array.isArray(articles) || articles.length === 0) throw new Error('No articles returned.');
+    const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    let html = articles.map(a => `
+      <div class="news-card">
+        <div class="card-top">
+          <span class="tag ${cfg.cls}">${cfg.tag}</span>
+          <span class="card-time">${a.time || 'Today'}</span>
+        </div>
+        <div class="card-headline">${a.headline}</div>
+        <div class="card-summary">${a.summary || ''}</div>
+        <div class="card-source">${a.source || 'News'}</div>
+      </div>`).join('');
+    html += `<div class="updated-ts">Updated ${now}</div>`;
+    el.innerHTML = html;
+    loaded[id] = true;
+  } catch(e) {
+    el.innerHTML = `<div class="error-card"><strong>Could not load headlines</strong>${e.message}</div>`;
+  }
+}
+loadTab('realestate');
+</script>
+</body>
+</html>
