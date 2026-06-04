@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // ── PUT YOUR ANTHROPIC API KEY HERE ──────────────────────────────────────────
-const ANTHROPIC_API_KEY = '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';
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000;
